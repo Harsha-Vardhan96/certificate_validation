@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
 public class ApplicationResponse {
 
     private Long applicationId;
-    private java.util.UUID studentId;
-    private java.util.UUID institutionId;
+    private Long studentId;
+    private Long institutionId;
     private String institutionName;
     private String courseName;
     private ApplicationStatus status;
@@ -39,19 +39,19 @@ public class ApplicationResponse {
         this.applicationId = applicationId;
     }
 
-    public java.util.UUID getStudentId() {
+    public Long getStudentId() {
         return studentId;
     }
 
-    public void setStudentId(java.util.UUID studentId) {
+    public void setStudentId(Long studentId) {
         this.studentId = studentId;
     }
 
-    public java.util.UUID getInstitutionId() {
+    public Long getInstitutionId() {
         return institutionId;
     }
 
-    public void setInstitutionId(java.util.UUID institutionId) {
+    public void setInstitutionId(Long institutionId) {
         this.institutionId = institutionId;
     }
 

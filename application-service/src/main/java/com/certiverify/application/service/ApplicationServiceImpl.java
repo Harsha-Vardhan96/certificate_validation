@@ -29,7 +29,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     @Transactional
-    public ApplicationResponse createApplication(UUID studentId, ApplicationRequest request) {
+    public ApplicationResponse createApplication(Long studentId, ApplicationRequest request) {
         Application application = new Application();
         application.setStudentId(studentId);
         application.setInstitutionId(request.getInstitutionId());
@@ -42,14 +42,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public List<ApplicationResponse> getStudentApplications(UUID studentId) {
+    public List<ApplicationResponse> getStudentApplications(Long studentId) {
         return applicationRepository.findByStudentId(studentId).stream()
                 .map(ApplicationResponse::new)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public ApplicationResponse getApplicationById(Long applicationId, UUID userId, String userRole) {
+    public ApplicationResponse getApplicationById(Long applicationId, Long userId, String userRole) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
 
@@ -64,7 +64,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public List<ApplicationResponse> getInstitutionApplications(UUID institutionId) {
+    public List<ApplicationResponse> getInstitutionApplications(Long institutionId) {
         return applicationRepository.findByInstitutionId(institutionId).stream()
                 .map(ApplicationResponse::new)
                 .collect(Collectors.toList());
@@ -79,7 +79,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     @Transactional
-    public ApplicationResponse approveApplication(UUID institutionId, Long applicationId) {
+    public ApplicationResponse approveApplication(Long institutionId, Long applicationId) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
 
@@ -114,7 +114,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     @Transactional
-    public ApplicationResponse rejectApplication(UUID institutionId, Long applicationId, com.certiverify.application.dto.RejectRequest request) {
+    public ApplicationResponse rejectApplication(Long institutionId, Long applicationId, com.certiverify.application.dto.RejectRequest request) {
 
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found"));

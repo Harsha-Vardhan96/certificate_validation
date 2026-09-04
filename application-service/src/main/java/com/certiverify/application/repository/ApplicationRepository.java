@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Repository
 public interface ApplicationRepository extends JpaRepository<Application, Long> {
-    List<Application> findByStudentId(UUID studentId);
-    List<Application> findByInstitutionId(UUID institutionId);
-    List<Application> findByInstitutionIdAndStatus(UUID institutionId, ApplicationStatus status);
+    List<Application> findByStudentId(Long studentId);
+    List<Application> findByInstitutionId(Long institutionId);
+    List<Application> findByInstitutionIdAndStatus(Long institutionId, ApplicationStatus status);
 }

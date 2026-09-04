@@ -12,13 +12,13 @@ public class Application {
     private Long applicationId;
 
     @Column(nullable = false)
-    private java.util.UUID studentId;
+    private Long studentId;
 
     @Column(nullable = false)
     private String courseName;
 
     @Column(nullable = false)
-    private java.util.UUID institutionId;
+    private Long institutionId;
 
     @Column(nullable = false)
     private String institutionName;
@@ -53,11 +53,11 @@ public class Application {
         this.applicationId = applicationId;
     }
 
-    public java.util.UUID getStudentId() {
+    public Long getStudentId() {
         return studentId;
     }
 
-    public void setStudentId(java.util.UUID studentId) {
+    public void setStudentId(Long studentId) {
         this.studentId = studentId;
     }
 
@@ -69,11 +69,11 @@ public class Application {
         this.courseName = courseName;
     }
 
-    public java.util.UUID getInstitutionId() {
+    public Long getInstitutionId() {
         return institutionId;
     }
 
-    public void setInstitutionId(java.util.UUID institutionId) {
+    public void setInstitutionId(Long institutionId) {
         this.institutionId = institutionId;
     }
 

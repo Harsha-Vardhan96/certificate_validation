@@ -25,15 +25,14 @@ public class JwtService {
         return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
-    public java.util.UUID extractUserId(String token) {
-        String userIdStr = extractClaim(token, claims -> claims.get("userId", String.class));
-        if (userIdStr != null) {
-            return java.util.UUID.fromString(userIdStr);
-        } else {
-            // fallback if it was a number (e.g. from tests)
-            Integer id = extractClaim(token, claims -> claims.get("userId", Integer.class));
-            return id != null ? new java.util.UUID(0, id.longValue()) : null;
+    public Long extractUserId(String token) {
+        Object userIdObj = extractClaim(token, claims -> claims.get("userId"));
+        if (userIdObj instanceof Number) {
+            return ((Number) userIdObj).longValue();
+        } else if (userIdObj instanceof String) {
+            return Long.parseLong((String) userIdObj);
         }
+        return null;
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {

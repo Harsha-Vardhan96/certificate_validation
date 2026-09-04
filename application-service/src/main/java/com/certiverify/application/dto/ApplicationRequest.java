@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 public class ApplicationRequest {
 
     @NotNull(message = "Institution ID is required")
-    private java.util.UUID institutionId;
+    private Long institutionId;
 
     @NotBlank(message = "Institution name is required")
     private String institutionName;
@@ -14,11 +14,11 @@ public class ApplicationRequest {
     @NotBlank(message = "Course name is required")
     private String courseName;
 
-    public java.util.UUID getInstitutionId() {
+    public Long getInstitutionId() {
         return institutionId;
     }
 
-    public void setInstitutionId(java.util.UUID institutionId) {
+    public void setInstitutionId(Long institutionId) {
         this.institutionId = institutionId;
     }
 

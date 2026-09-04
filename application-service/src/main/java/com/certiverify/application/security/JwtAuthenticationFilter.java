@@ -46,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 if (jwtService.isTokenValid(jwt)) {
                     String role = jwtService.extractRole(jwt);
-                    java.util.UUID userId = jwtService.extractUserId(jwt);
+                    Long userId = jwtService.extractUserId(jwt);
 
                     AuthenticatedUser authenticatedUser = new AuthenticatedUser(userId, userEmail, role);
 

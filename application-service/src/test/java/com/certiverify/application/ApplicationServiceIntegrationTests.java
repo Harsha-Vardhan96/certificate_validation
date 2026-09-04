@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
+
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,7 +49,7 @@ public class ApplicationServiceIntegrationTests {
         applicationRepository.deleteAll();
     }
 
-    private String generateToken(UUID userId, String role) {
+    private String generateToken(Long userId, String role) {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("userId", userId.toString());
         extraClaims.put("role", role);
@@ -59,8 +59,8 @@ public class ApplicationServiceIntegrationTests {
     // 1. student creates application
     @Test
     void studentCreatesApplication() throws Exception {
-        UUID studentId = UUID.randomUUID();
-        UUID institutionId = UUID.randomUUID();
+        Long studentId = 100L;
+        Long institutionId = 200L;
         String token = generateToken(studentId, "STUDENT");
         ApplicationRequest req = new ApplicationRequest();
         req.setInstitutionId(institutionId);
@@ -81,7 +81,7 @@ public class ApplicationServiceIntegrationTests {
     @Test
     void unauthenticatedCreationRejected() throws Exception {
         ApplicationRequest req = new ApplicationRequest();
-        req.setInstitutionId(UUID.randomUUID());
+        req.setInstitutionId(200L);
         req.setInstitutionName("Harvard");
         req.setCourseName("CS101");
 
@@ -94,7 +94,7 @@ public class ApplicationServiceIntegrationTests {
     // 3. institution cannot create student application
     @Test
     void institutionCannotCreateStudentApplication() throws Exception {
-        UUID institutionId = UUID.randomUUID();
+        Long institutionId = 200L;
         String token = generateToken(institutionId, "INSTITUTION");
         ApplicationRequest req = new ApplicationRequest();
         req.setInstitutionId(institutionId);
@@ -111,10 +111,10 @@ public class ApplicationServiceIntegrationTests {
     // 4. application starts PENDING
     @Test
     void applicationStartsPending() throws Exception {
-        UUID studentId = UUID.randomUUID();
+        Long studentId = 100L;
         String token = generateToken(studentId, "STUDENT");
         ApplicationRequest req = new ApplicationRequest();
-        req.setInstitutionId(UUID.randomUUID());
+        req.setInstitutionId(200L);
         req.setInstitutionName("MIT");
         req.setCourseName("Physics");
 
@@ -129,10 +129,10 @@ public class ApplicationServiceIntegrationTests {
     // 5. student sees own applications
     @Test
     void studentSeesOwnApplications() throws Exception {
-        UUID studentId = UUID.randomUUID();
+        Long studentId = 100L;
         String token = generateToken(studentId, "STUDENT");
         ApplicationRequest req = new ApplicationRequest();
-        req.setInstitutionId(UUID.randomUUID());
+        req.setInstitutionId(200L);
         req.setInstitutionName("Stanford");
         req.setCourseName("Math");
 
@@ -151,14 +151,14 @@ public class ApplicationServiceIntegrationTests {
     @Test
     void studentCannotSeeAnotherStudentsApplication() throws Exception {
         Application app = new Application();
-        app.setStudentId(UUID.randomUUID());
-        app.setInstitutionId(UUID.randomUUID());
+        app.setStudentId(100L);
+        app.setInstitutionId(200L);
         app.setInstitutionName("Yale");
         app.setCourseName("History");
         app.setStatus(ApplicationStatus.PENDING);
         app = applicationRepository.save(app);
 
-        UUID otherStudentId = UUID.randomUUID();
+        Long otherStudentId = 101L;
         String token = generateToken(otherStudentId, "STUDENT");
 
         mockMvc.perform(get("/api/applications/" + app.getApplicationId())
@@ -169,9 +169,9 @@ public class ApplicationServiceIntegrationTests {
     // 7. institution sees authorized applications
     @Test
     void institutionSeesAuthorizedApplications() throws Exception {
-        UUID instId = UUID.randomUUID();
+        Long instId = 201L;
         Application app = new Application();
-        app.setStudentId(UUID.randomUUID());
+        app.setStudentId(100L);
         app.setInstitutionId(instId);
         app.setInstitutionName("UCLA");
         app.setCourseName("Art");
@@ -189,9 +189,9 @@ public class ApplicationServiceIntegrationTests {
     // 8. institution approves PENDING application
     @Test
     void institutionApprovesPendingApplication() throws Exception {
-        UUID instId = UUID.randomUUID();
+        Long instId = 201L;
         Application app = new Application();
-        app.setStudentId(UUID.randomUUID());
+        app.setStudentId(100L);
         app.setInstitutionId(instId);
         app.setInstitutionName("NYU");
         app.setCourseName("Film");
@@ -209,9 +209,9 @@ public class ApplicationServiceIntegrationTests {
     // 9. institution rejects PENDING application
     @Test
     void institutionRejectsPendingApplication() throws Exception {
-        UUID instId = UUID.randomUUID();
+        Long instId = 201L;
         Application app = new Application();
-        app.setStudentId(UUID.randomUUID());
+        app.setStudentId(100L);
         app.setInstitutionId(instId);
         app.setInstitutionName("USC");
         app.setCourseName("Music");
@@ -234,9 +234,9 @@ public class ApplicationServiceIntegrationTests {
     // 10. rejection requires reason
     @Test
     void rejectionRequiresReason() throws Exception {
-        UUID instId = UUID.randomUUID();
+        Long instId = 201L;
         Application app = new Application();
-        app.setStudentId(UUID.randomUUID());
+        app.setStudentId(100L);
         app.setInstitutionId(instId);
         app.setInstitutionName("Brown");
         app.setCourseName("Chem");
@@ -257,9 +257,9 @@ public class ApplicationServiceIntegrationTests {
     // 11. approved cannot be approved again
     @Test
     void approvedCannotBeApprovedAgain() throws Exception {
-        UUID instId = UUID.randomUUID();
+        Long instId = 201L;
         Application app = new Application();
-        app.setStudentId(UUID.randomUUID());
+        app.setStudentId(100L);
         app.setInstitutionId(instId);
         app.setInstitutionName("Columbia");
         app.setCourseName("Law");
@@ -276,9 +276,9 @@ public class ApplicationServiceIntegrationTests {
     // 12. approved cannot be rejected
     @Test
     void approvedCannotBeRejected() throws Exception {
-        UUID instId = UUID.randomUUID();
+        Long instId = 201L;
         Application app = new Application();
-        app.setStudentId(UUID.randomUUID());
+        app.setStudentId(100L);
         app.setInstitutionId(instId);
         app.setInstitutionName("Columbia");
         app.setCourseName("Law");
@@ -299,9 +299,9 @@ public class ApplicationServiceIntegrationTests {
     // 13. rejected cannot be approved
     @Test
     void rejectedCannotBeApproved() throws Exception {
-        UUID instId = UUID.randomUUID();
+        Long instId = 201L;
         Application app = new Application();
-        app.setStudentId(UUID.randomUUID());
+        app.setStudentId(100L);
         app.setInstitutionId(instId);
         app.setInstitutionName("Columbia");
         app.setCourseName("Law");
@@ -319,14 +319,14 @@ public class ApplicationServiceIntegrationTests {
     @Test
     void unauthorizedInstitutionCannotModifyAnotherInstitutionsApplication() throws Exception {
         Application app = new Application();
-        app.setStudentId(UUID.randomUUID());
-        app.setInstitutionId(UUID.randomUUID());
+        app.setStudentId(100L);
+        app.setInstitutionId(200L);
         app.setInstitutionName("Columbia");
         app.setCourseName("Law");
         app.setStatus(ApplicationStatus.PENDING);
         app = applicationRepository.save(app);
 
-        String token = generateToken(UUID.randomUUID(), "INSTITUTION");
+        String token = generateToken(999L, "INSTITUTION");
 
         mockMvc.perform(put("/api/applications/" + app.getApplicationId() + "/approve")
                 .header("Authorization", "Bearer " + token))
@@ -337,14 +337,14 @@ public class ApplicationServiceIntegrationTests {
     @Test
     void adminCanViewApplications() throws Exception {
         Application app = new Application();
-        app.setStudentId(UUID.randomUUID());
-        app.setInstitutionId(UUID.randomUUID());
+        app.setStudentId(100L);
+        app.setInstitutionId(200L);
         app.setInstitutionName("Columbia");
         app.setCourseName("Law");
         app.setStatus(ApplicationStatus.PENDING);
         applicationRepository.save(app);
 
-        String token = generateToken(UUID.randomUUID(), "ADMIN");
+        String token = generateToken(999L, "ADMIN");
 
         mockMvc.perform(get("/api/applications/admin")
                 .header("Authorization", "Bearer " + token))
@@ -355,7 +355,7 @@ public class ApplicationServiceIntegrationTests {
     // 16. validation errors
     @Test
     void validationErrors() throws Exception {
-        String token = generateToken(UUID.randomUUID(), "STUDENT");
+        String token = generateToken(999L, "STUDENT");
         ApplicationRequest req = new ApplicationRequest();
 
         mockMvc.perform(post("/api/applications")
