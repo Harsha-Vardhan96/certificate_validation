@@ -1,0 +1,37 @@
+### Build Tools & Packaging ###
+apache-maven-*/
+maven.zip
+*.zip
+spring-boot-metadata.xml
+spring-cloud-metadata.xml
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+/.metadata/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### VS Code ###
+.vscode/
+
+### Environment ###
+.env
+.env.local
+
+### Other ###
+*.log
+*.tmp
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
