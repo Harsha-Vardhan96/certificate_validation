@@ -29,3 +29,10 @@ target/
 *.log
 *.tmp
 /.metadata/
+
+### Frontend ###
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
