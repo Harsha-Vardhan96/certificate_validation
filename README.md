@@ -1,55 +1,229 @@
-# CertiVerify GLOBAL
-"Verifiable Digital Credentials & Certificate Issuance Engine"
+# CertiVerify Global
 
-## Purpose
-CertiVerify is a system designed to issue, manage, and verify digital certificates efficiently and securely.
+> **Enterprise Verifiable Digital Credentials & Certificate Lifecycle Management Engine**
 
-## Microservice Architecture
-The backend is composed of the following independent Spring Boot microservices:
+CertiVerify Global is a full-stack platform designed to manage the end-to-end lifecycle of academic and institutional digital certificates. It features student application workflows, institutional review and approval, cryptographic hash generation (SHA-256), dynamic QR-code encoding, on-the-fly PDF generation, and tamper-evident public credential verification.
 
-1. **eureka-server** (Port: 8761) - Service registry for all microservices.
-2. **api-gateway** (Port: 8080) - Single entry point for frontend React application. Routes requests to appropriate services.
-3. **auth-service** (Port: 8081) - Manages user authentication, registration, roles, and JWT generation.
-4. **application-service** (Port: 8082) - Handles certificate application submissions and approvals.
-5. **certificate-service** (Port: 8083) - Handles certificate generation (ID, QR code, PDF, SHA-256 hash).
-6. **verification-service** (Port: 8084) - Verifies public certificates against tampered states.
+---
 
-## Technology Stack
-- **Language**: Java 21
-- **Build**: Maven
-- **Framework**: Spring Boot 4.0.8
-- **Spring Cloud**: 2025.1.3
-- **Database**: PostgreSQL (Spring Data JPA)
-- **Security**: Spring Security & JWT (BCrypt)
-- **Service Discovery**: Spring Cloud Netflix Eureka
-- **API Gateway**: Spring Cloud Gateway
-- **Inter-service**: Spring Cloud OpenFeign
-- **Testing**: JUnit 5, Mockito
+## 1. System Architecture
 
-## User Roles
-1. **STUDENT**: Register/login, apply for certificates, view/download certificates.
-2. **INSTITUTION**: Login, view/approve applications, issue/revoke certificates.
-3. **ADMIN**: Manage users/institutions, manage all certificates.
-*Note: Public users can verify certificates without an account.*
+```mermaid
+graph TD
+    subgraph Client Tier
+        Frontend["React + Vite Single-Page Application<br/>(Port 5173)"]
+        PublicVerifier["Public Verifier / QR Scanner"]
+    end
 
-## High-Level Certificate Flow
-1. **Student** submits an application via application-service.
-2. **Institution** approves the application.
-3. certificate-service generates a unique ID, SHA-256 hash, QR code, and PDF.
-4. Certificate is Issued.
-5. **Public User** verifies the certificate via verification-service by looking up the ID and validating the hash.
+    subgraph Edge Tier
+        Gateway["API Gateway (Port 8080)<br/>Spring Cloud Gateway + JWT Filter"]
+        Eureka["Eureka Discovery Server (Port 8761)<br/>Spring Cloud Netflix"]
+    end
 
-## Database Architecture
-Each microservice maintains its own distinct PostgreSQL database to enforce decoupled architecture:
-- auth_db
-- application_db
-- certificate_db
-- verification_db
+    subgraph Service Tier
+        AuthService["Auth Service (Port 8081)<br/>JWT, BCrypt, RBAC"]
+        AppService["Application Service (Port 8082)<br/>Workflow State Machine"]
+        CertService["Certificate Service (Port 8083)<br/>PDFBox, ZXing QR, SHA-256"]
+        VerifyService["Verification Service (Port 8084)<br/>Cryptographic Verifier"]
+    end
 
-Cross-service data access happens strictly through REST APIs (OpenFeign).
+    subgraph Data Tier
+        DB_Auth[(auth_db<br/>PostgreSQL:5433)]
+        DB_App[(application_db<br/>PostgreSQL:5433)]
+        DB_Cert[(certificate_db<br/>PostgreSQL:5433)]
+        DB_Verify[(verification_db<br/>PostgreSQL:5433)]
+    end
 
-## Inter-Service Communication & Eureka
-- eureka-server acts as the service registry.
-- All other services (Clients) register with Eureka on startup.
-- OpenFeign is used for synchronous communication between services.
-- Load balancing is handled natively through Spring Cloud LoadBalancer.
+    Frontend -->|HTTP / REST + JWT| Gateway
+    PublicVerifier -->|GET /api/verify/:id| Gateway
+
+    Gateway -.->|Service Lookup| Eureka
+    AuthService -.->|Register & Heartbeat| Eureka
+    AppService -.->|Register & Heartbeat| Eureka
+    CertService -.->|Register & Heartbeat| Eureka
+    VerifyService -.->|Register & Heartbeat| Eureka
+
+    Gateway -->|/api/auth/**| AuthService
+    Gateway -->|/api/applications/**| AppService
+    Gateway -->|/api/certificates/**| CertService
+    Gateway -->|/api/verify/**| VerifyService
+
+    AppService -->|OpenFeign: /api/certificates/issue| CertService
+    VerifyService -->|OpenFeign: /api/certificates/internal/:id| CertService
+
+    AuthService --- DB_Auth
+    AppService --- DB_App
+    CertService --- DB_Cert
+    VerifyService --- DB_Verify
+```
+
+---
+
+## 2. Repository Structure
+
+```text
+certificate_validation/
+├── frontend/
+│   ├── public/                    # Static assets & icons
+│   ├── src/                       # React components, contexts, layouts, & pages
+│   │   ├── components/            # Reusable UI components & ProtectedRoute
+│   │   ├── context/               # AuthContext & JWT storage handler
+│   │   ├── layouts/               # Role-based layouts (Student, Institution, Admin, Public)
+│   │   ├── pages/                 # Portal views (Dashboard, Applications, Certificates)
+│   │   ├── routes/                # Client-side router configuration
+│   │   └── services/              # Axios API client with automatic JWT bearer interceptor
+│   ├── package.json               # NPM package definitions
+│   ├── package-lock.json          # Dependency lockfile
+│   ├── vite.config.js             # Vite build & proxy settings
+│   ├── .env.example               # Frontend environment template
+│   └── README.md                  # Frontend development documentation
+├── backend/
+│   └── CertiVerify-Backend/
+│       ├── api-gateway/           # Spring Cloud Gateway (Port 8080)
+│       ├── auth-service/          # Authentication & Authorization microservice (Port 8081)
+│       ├── application-service/   # Certificate applications microservice (Port 8082)
+│       ├── certificate-service/   # Certificate generation & PDF engine (Port 8083)
+│       ├── verification-service/  # Public authenticity verifier (Port 8084)
+│       ├── eureka-server/         # Eureka Service Registry (Port 8761)
+│       └── README.md              # Backend microservices documentation
+├── postman/                       # Ready-to-import Postman request payloads
+│   ├── login
+│   ├── register
+│   ├── application-my
+│   └── certificate application
+├── docs/                          # Architecture & API specifications
+│   ├── architecture/
+│   └── api-documentation/
+├── .gitignore                     # Git ignore rules for node, java, and environments
+└── README.md                      # Project root documentation
+```
+
+---
+
+## 3. Technology Stack
+
+- **Frontend:**
+  - React 18, React Router v6
+  - Vite 8 build system
+  - Axios HTTP client with JWT request interceptor
+  - Responsive CSS custom properties (light modern design system)
+- **Backend Microservices:**
+  - Java 21 / 25
+  - Spring Boot 3.3.4 & Spring Cloud 2023.x
+  - Spring Cloud Netflix Eureka (Service Discovery)
+  - Spring Cloud Gateway (Reactive Non-blocking Gateway)
+  - Spring Cloud OpenFeign (Inter-service REST Communication)
+  - Spring Security with Stateless JWT Authentication & BCrypt
+  - Apache PDFBox (Dynamic Certificate PDF Generation)
+  - ZXing (QR Code generation embedding verification URL)
+- **Database & Storage:**
+  - PostgreSQL 16 / 18
+  - Database-per-service pattern (`auth_db`, `application_db`, `certificate_db`, `verification_db`)
+  - Spring Data JPA / Hibernate ORM
+
+---
+
+## 4. Service Ports & Route Mappings
+
+| Service | Local Port | Gateway Route Prefix | Role Access |
+| :--- | :--- | :--- | :--- |
+| **Eureka Server** | `8761` | Direct dashboard access (`http://localhost:8761`) | Internal / Dev |
+| **API Gateway** | `8080` | `http://localhost:8080` | All / Public |
+| **Auth Service** | `8081` | `/api/auth/**` | Public (`/register`, `/login`) |
+| **Application Service** | `8082` | `/api/applications/**` | `STUDENT`, `INSTITUTION`, `ADMIN` |
+| **Certificate Service** | `8083` | `/api/certificates/**` | `STUDENT` (`/my`, `/download`), `INSTITUTION`, `ADMIN` |
+| **Verification Service** | `8084` | `/api/verify/**` | Public (`GET /api/verify/{id}`) |
+| **Frontend UI** | `5173` | `http://localhost:5173` | Browser Client |
+
+---
+
+## 5. Local Setup & Startup Instructions
+
+### 5.1 Prerequisites
+- **JDK 21 or higher** (`JAVA_HOME` configured)
+- **Apache Maven 3.9+**
+- **Node.js 18+ & npm**
+- **PostgreSQL 16 or 18** running locally on port `5433` (or `5432` per config)
+
+### 5.2 Database Preparation
+Create the four microservice databases in PostgreSQL:
+```sql
+CREATE DATABASE auth_db;
+CREATE DATABASE application_db;
+CREATE DATABASE certificate_db;
+CREATE DATABASE verification_db;
+```
+
+### 5.3 Backend Startup Sequence
+Start each service in the following order:
+
+1. **Eureka Server:**
+   ```bash
+   cd backend/CertiVerify-Backend/eureka-server
+   mvn spring-boot:run
+   ```
+   *Verify dashboard is online at `http://localhost:8761`.*
+
+2. **Auth Service:**
+   ```bash
+   cd backend/CertiVerify-Backend/auth-service
+   mvn spring-boot:run
+   ```
+
+3. **Certificate Service:**
+   ```bash
+   cd backend/CertiVerify-Backend/certificate-service
+   mvn spring-boot:run
+   ```
+
+4. **Application Service:**
+   ```bash
+   cd backend/CertiVerify-Backend/application-service
+   mvn spring-boot:run
+   ```
+
+5. **Verification Service:**
+   ```bash
+   cd backend/CertiVerify-Backend/verification-service
+   mvn spring-boot:run
+   ```
+
+6. **API Gateway:**
+   ```bash
+   cd backend/CertiVerify-Backend/api-gateway
+   mvn spring-boot:run
+   ```
+
+### 5.4 Frontend Startup
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+Open `http://localhost:5173` in your browser.
+
+---
+
+## 6. Testing Instructions
+
+### Run Backend Unit & Integration Tests
+```bash
+# In each respective service directory, or via bundled Maven:
+mvn -f backend/CertiVerify-Backend/certificate-service/pom.xml test
+mvn -f backend/CertiVerify-Backend/application-service/pom.xml test
+```
+
+### Build Frontend Production Bundle
+```bash
+cd frontend
+npm run build
+```
+
+---
+
+## 7. Security Notes & Best Practices
+
+- **Never Commit Secrets:** Real database passwords, JWT private signing keys, and environment overrides must be injected via environment variables (`JWT_SECRET`, `SPRING_DATASOURCE_PASSWORD`) in production.
+- **Server-Side Authorization:** Student certificate access and PDF download endpoints enforce strict server-side identity checks against the authenticated JWT principal.
+- **Microservice Isolation:** Microservices do not directly access each other's databases; all cross-service operations occur via OpenFeign client interfaces.
