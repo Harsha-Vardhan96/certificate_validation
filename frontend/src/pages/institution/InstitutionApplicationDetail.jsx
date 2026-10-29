@@ -17,6 +17,30 @@ export default function InstitutionApplicationDetail() {
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const [rejectValidationError, setRejectValidationError] = useState('')
+  const [downloadingDoc, setDownloadingDoc] = useState(false)
+
+  async function handleDownloadDocument() {
+    setDownloadingDoc(true)
+    setFeedback(null)
+    try {
+      const res = await api.get(`/api/applications/${applicationId}/document`, {
+        responseType: 'blob',
+      })
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = application.supportingDocumentName || `supporting-certificate-${applicationId}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      setFeedback({ type: 'error', message: 'Failed to download supporting certificate PDF.' })
+    } finally {
+      setDownloadingDoc(false)
+    }
+  }
 
   const fetchApplication = useCallback(async () => {
     setLoading(true)
@@ -251,6 +275,67 @@ export default function InstitutionApplicationDetail() {
                     <span>{formatDate(application.updatedAt)}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Supporting Document Card */}
+              <div style={{
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 8,
+                padding: '1.5rem',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: 0, color: 'var(--color-heading)' }}>
+                    Supporting Certificate (PDF)
+                  </h2>
+                  {application.hasSupportingDocument && (
+                    <span className="status-badge" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0' }}>
+                      ATTACHED
+                    </span>
+                  )}
+                </div>
+                {application.hasSupportingDocument || application.supportingDocumentName ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.875rem 1rem',
+                    background: 'var(--color-surface-alt)',
+                    borderRadius: 6,
+                    border: '1px solid var(--color-border)',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: 22, height: 22, color: '#dc2626', flexShrink: 0 }}>
+                        <path fillRule="evenodd" d="M4 4a2 2 0 0 1 2-2h4.586A2 2 0 0 1 12 2.586L15.414 6A2 2 0 0 1 16 7.414V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Zm2 6a.75.75 0 0 1 .75-.75h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 6 10Zm.75 2.25a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
+                      </svg>
+                      <div style={{ overflow: 'hidden' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.875rem', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          {application.supportingDocumentName || 'Supporting_Certificate.pdf'}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-muted)' }}>
+                          Student credential verification attachment
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDownloadDocument}
+                      disabled={downloadingDoc}
+                      className="btn btn-secondary btn-sm"
+                      style={{ flexShrink: 0, marginLeft: '1rem' }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: 14, height: 14, marginRight: '0.375rem' }}>
+                        <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
+                        <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+                      </svg>
+                      {downloadingDoc ? 'Downloading…' : 'View / Download PDF'}
+                    </button>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--color-muted)', margin: 0 }}>
+                    No supporting document was uploaded for this application.
+                  </p>
+                )}
               </div>
 
               {/* Academic Verification Checklist */}

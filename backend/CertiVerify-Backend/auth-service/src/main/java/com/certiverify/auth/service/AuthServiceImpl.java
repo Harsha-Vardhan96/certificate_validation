@@ -80,10 +80,6 @@ public class AuthServiceImpl implements AuthService {
 
         Role requestedRole = request.getRole() != null ? request.getRole() : Role.INSTITUTION;
 
-        if (requestedRole == Role.STUDENT) {
-            throw new IllegalArgumentException("Please use the public registration endpoint for students");
-        }
-
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
@@ -92,8 +88,6 @@ public class AuthServiceImpl implements AuthService {
 
         userRepository.save(user);
 
-        // Don't log them in automatically when admin creates them, just return success without token or with token
-        // We'll return the standard response but token could be omitted or we can return a token for them.
         String token = jwtService.generateToken(user);
         return new AuthResponse(token, user.getUserId(), user.getName(), user.getEmail(), user.getRole());
     }

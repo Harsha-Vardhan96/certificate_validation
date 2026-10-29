@@ -82,10 +82,19 @@ export default function AdminUsers() {
       })
       setErrors({})
     } catch (err) {
-      if (err.response?.data?.message) {
-        setServerError(err.response.data.message)
-      } else if (err.response?.status === 403 || err.response?.status === 401) {
-        setServerError('Permission denied. Admin authorization required.')
+      if (err.response) {
+        const errorMsg =
+          err.response.data?.message ||
+          err.response.data?.error ||
+          (typeof err.response.data === 'string' ? err.response.data : null)
+
+        if (errorMsg) {
+          setServerError(errorMsg)
+        } else if (err.response.status === 403 || err.response.status === 401) {
+          setServerError('Permission denied. Admin authorization required.')
+        } else {
+          setServerError(`Request failed with status ${err.response.status}. Please verify input and try again.`)
+        }
       } else if (err.request) {
         setServerError('Unable to reach the authentication service. Please check backend connection.')
       } else {

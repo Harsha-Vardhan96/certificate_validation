@@ -7,6 +7,8 @@ export default function StudentApplicationDetail() {
   const [application, setApplication] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [downloadingDoc, setDownloadingDoc] = useState(false)
+  const [downloadError, setDownloadError] = useState('')
 
   const fetchApplication = useCallback(async () => {
     setLoading(true)
@@ -32,6 +34,29 @@ export default function StudentApplicationDetail() {
   useEffect(() => {
     fetchApplication()
   }, [fetchApplication])
+
+  async function handleDownloadDocument() {
+    setDownloadingDoc(true)
+    setDownloadError('')
+    try {
+      const res = await api.get(`/api/applications/${applicationId}/document`, {
+        responseType: 'blob',
+      })
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = application.supportingDocumentName || `supporting-certificate-${applicationId}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      setDownloadError('Failed to download supporting certificate PDF. Please check connection and try again.')
+    } finally {
+      setDownloadingDoc(false)
+    }
+  }
 
   function formatDate(dateStr) {
     if (!dateStr) return '—'
@@ -121,6 +146,55 @@ export default function StudentApplicationDetail() {
               <div className="cert-detail-field">
                 <label>Last Updated</label>
                 <span>{formatDate(application.updatedAt)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Supporting Document Section */}
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--color-border)' }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, margin: '0 0 0.75rem', color: 'var(--color-heading)' }}>
+              Supporting Certificate Document
+            </h3>
+            {downloadError && (
+              <div className="error-state" style={{ marginBottom: '0.75rem' }}>
+                <span>{downloadError}</span>
+              </div>
+            )}
+            {application.hasSupportingDocument || application.supportingDocumentName ? (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.75rem 1rem',
+                background: 'var(--color-surface-alt)',
+                borderRadius: 6,
+                border: '1px solid var(--color-border)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: 20, height: 20, color: '#dc2626', flexShrink: 0 }}>
+                    <path fillRule="evenodd" d="M4 4a2 2 0 0 1 2-2h4.586A2 2 0 0 1 12 2.586L15.414 6A2 2 0 0 1 16 7.414V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Zm2 6a.75.75 0 0 1 .75-.75h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 6 10Zm.75 2.25a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.8125rem' }}>
+                      {application.supportingDocumentName || 'Supporting_Certificate.pdf'}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-muted)' }}>
+                      Uploaded supporting credential (PDF)
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadDocument}
+                  disabled={downloadingDoc}
+                  className="btn btn-secondary btn-sm"
+                >
+                  {downloadingDoc ? 'Downloading…' : 'Download Document'}
+                </button>
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.8125rem', color: 'var(--color-muted)' }}>
+                No supporting document was attached to this application.
               </div>
             )}
           </div>

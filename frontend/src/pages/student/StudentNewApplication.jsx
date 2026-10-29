@@ -10,17 +10,54 @@ export default function StudentNewApplication() {
     institutionName: '',
     institutionId: '',
   })
+  const [file, setFile] = useState(null)
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [success, setSuccess] = useState(false)
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
   function handleChange(e) {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
-    // Clear field error on change
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }))
+    }
+  }
+
+  function handleFileChange(e) {
+    const selected = e.target.files[0]
+    if (!selected) {
+      setFile(null)
+      return
+    }
+
+    const isPdf = selected.type === 'application/pdf' || selected.name.toLowerCase().endsWith('.pdf')
+    if (!isPdf) {
+      setErrors((prev) => ({ ...prev, file: 'Only PDF files are supported. Please select a valid .pdf file.' }))
+      setFile(null)
+      e.target.value = ''
+      return
+    }
+
+    if (selected.size > MAX_FILE_SIZE) {
+      setErrors((prev) => ({ ...prev, file: 'File size exceeds maximum allowed limit of 10 MB.' }))
+      setFile(null)
+      e.target.value = ''
+      return
+    }
+
+    if (selected.size === 0) {
+      setErrors((prev) => ({ ...prev, file: 'The selected file is empty. Please select a valid PDF file.' }))
+      setFile(null)
+      e.target.value = ''
+      return
+    }
+
+    setFile(selected)
+    if (errors.file) {
+      setErrors((prev) => ({ ...prev, file: '' }))
     }
   }
 
@@ -37,6 +74,18 @@ export default function StudentNewApplication() {
     } else if (isNaN(Number(form.institutionId)) || Number(form.institutionId) <= 0) {
       newErrors.institutionId = 'Institution ID must be a positive number.'
     }
+
+    if (!file) {
+      newErrors.file = 'Please upload a supporting certificate PDF.'
+    } else {
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+      if (!isPdf) {
+        newErrors.file = 'Only PDF files are supported.'
+      } else if (file.size > MAX_FILE_SIZE) {
+        newErrors.file = 'File size exceeds maximum allowed limit of 10 MB.'
+      }
+    }
+
     return newErrors
   }
 
@@ -52,14 +101,19 @@ export default function StudentNewApplication() {
 
     setSubmitting(true)
     try {
-      const payload = {
-        courseName: form.courseName.trim(),
-        institutionName: form.institutionName.trim(),
-        institutionId: Number(form.institutionId),
-      }
-      await api.post('/api/applications', payload)
+      const formData = new FormData()
+      formData.append('courseName', form.courseName.trim())
+      formData.append('institutionName', form.institutionName.trim())
+      formData.append('institutionId', Number(form.institutionId))
+      formData.append('file', file)
+      formData.append('supportingDocument', file)
+
+      await api.post('/api/applications', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
       setSuccess(true)
-      // Redirect after brief delay so user sees feedback
       setTimeout(() => {
         navigate('/student/applications')
       }, 1500)
@@ -126,7 +180,7 @@ export default function StudentNewApplication() {
                 onChange={handleChange}
                 className={`form-input${errors.courseName ? ' form-input--error' : ''}`}
                 placeholder="e.g. Bachelor of Computer Science"
-                disabled={success}
+                disabled={submitting || success}
               />
               {errors.courseName && <div className="form-error">{errors.courseName}</div>}
             </div>
@@ -141,7 +195,7 @@ export default function StudentNewApplication() {
                 onChange={handleChange}
                 className={`form-input${errors.institutionName ? ' form-input--error' : ''}`}
                 placeholder="e.g. University of Technology"
-                disabled={success}
+                disabled={submitting || success}
               />
               {errors.institutionName && <div className="form-error">{errors.institutionName}</div>}
             </div>
@@ -157,11 +211,51 @@ export default function StudentNewApplication() {
                 onChange={handleChange}
                 className={`form-input${errors.institutionId ? ' form-input--error' : ''}`}
                 placeholder="e.g. 1"
-                disabled={success}
+                disabled={submitting || success}
               />
               {errors.institutionId && <div className="form-error">{errors.institutionId}</div>}
               <div className="form-hint">
                 The numeric ID of the institution you are applying to.
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="supportingFile" className="form-label">
+                Upload Supporting Certificate (PDF) <span style={{ color: 'var(--color-danger, #ef4444)' }}>*</span>
+              </label>
+              <input
+                id="supportingFile"
+                name="supportingFile"
+                type="file"
+                accept=".pdf,application/pdf"
+                onChange={handleFileChange}
+                className={`form-input${errors.file ? ' form-input--error' : ''}`}
+                disabled={submitting || success}
+              />
+              {file && (
+                <div style={{
+                  marginTop: '0.5rem',
+                  fontSize: '0.8125rem',
+                  color: 'var(--color-text, #1e293b)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: 'var(--color-surface-alt, #f8fafc)',
+                  padding: '0.375rem 0.625rem',
+                  borderRadius: 6,
+                  border: '1px solid var(--color-border, #e2e8f0)'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: 16, height: 16, color: '#dc2626', flexShrink: 0 }}>
+                    <path fillRule="evenodd" d="M4 4a2 2 0 0 1 2-2h4.586A2 2 0 0 1 12 2.586L15.414 6A2 2 0 0 1 16 7.414V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Zm2 6a.75.75 0 0 1 .75-.75h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 6 10Zm.75 2.25a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clipRule="evenodd" />
+                  </svg>
+                  <span style={{ wordBreak: 'break-all' }}>
+                    Selected: <strong>{file.name}</strong> ({(file.size / 1024).toFixed(1)} KB)
+                  </span>
+                </div>
+              )}
+              {errors.file && <div className="form-error">{errors.file}</div>}
+              <div className="form-hint">
+                Attach one official completion document, transcript, or certificate in PDF format (Max 10 MB).
               </div>
             </div>
 

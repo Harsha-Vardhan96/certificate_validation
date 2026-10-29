@@ -218,4 +218,97 @@ public class AuthServiceIntegrationTests {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void testAdminCanCreateStudent() throws Exception {
+        User admin = new User();
+        admin.setName("Admin User");
+        admin.setEmail("admin@certiverify.com");
+        admin.setPassword(passwordEncoder.encode("admin123"));
+        admin.setRole(Role.ADMIN);
+        userRepository.save(admin);
+
+        String adminToken = jwtService.generateToken(admin);
+
+        RegisterRequest request = new RegisterRequest();
+        request.setName("Alice Student");
+        request.setEmail("alice@student.edu");
+        request.setPassword("password123");
+        request.setRole(Role.STUDENT);
+
+        mockMvc.perform(post("/api/auth/admin/users")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("STUDENT"))
+                .andExpect(jsonPath("$.email").value("alice@student.edu"));
+
+        User saved = userRepository.findByEmail("alice@student.edu").orElseThrow();
+        assertEquals(Role.STUDENT, saved.getRole());
+        assertTrue(passwordEncoder.matches("password123", saved.getPassword()));
+    }
+
+    @Test
+    void testAdminCanCreateAnotherAdmin() throws Exception {
+        User admin = new User();
+        admin.setName("Primary Admin");
+        admin.setEmail("admin@certiverify.com");
+        admin.setPassword(passwordEncoder.encode("admin123"));
+        admin.setRole(Role.ADMIN);
+        userRepository.save(admin);
+
+        String adminToken = jwtService.generateToken(admin);
+
+        RegisterRequest request = new RegisterRequest();
+        request.setName("Secondary Admin");
+        request.setEmail("admin2@certiverify.com");
+        request.setPassword("password123");
+        request.setRole(Role.ADMIN);
+
+        mockMvc.perform(post("/api/auth/admin/users")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("ADMIN"))
+                .andExpect(jsonPath("$.email").value("admin2@certiverify.com"));
+
+        User saved = userRepository.findByEmail("admin2@certiverify.com").orElseThrow();
+        assertEquals(Role.ADMIN, saved.getRole());
+    }
+
+    @Test
+    void testAdminDuplicateEmailReturnsBadRequestWithMessage() throws Exception {
+        User admin = new User();
+        admin.setName("Primary Admin");
+        admin.setEmail("admin@certiverify.com");
+        admin.setPassword(passwordEncoder.encode("admin123"));
+        admin.setRole(Role.ADMIN);
+        userRepository.save(admin);
+
+        String adminToken = jwtService.generateToken(admin);
+
+        // First creation succeeds
+        RegisterRequest request = new RegisterRequest();
+        request.setName("First Inst");
+        request.setEmail("duplicate@test.com");
+        request.setPassword("password123");
+        request.setRole(Role.INSTITUTION);
+
+        mockMvc.perform(post("/api/auth/admin/users")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        // Duplicate attempt returns 400 with both error and message fields
+        mockMvc.perform(post("/api/auth/admin/users")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Email is already registered"))
+                .andExpect(jsonPath("$.message").value("Email is already registered"));
+    }
 }

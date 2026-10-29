@@ -30,6 +30,15 @@ public class Application {
     @Column(length = 1000)
     private String rejectionReason;
 
+    @Column(name = "supporting_document_name")
+    private String supportingDocumentName;
+
+    @Column(name = "supporting_document_path")
+    private String supportingDocumentPath;
+
+    @Column(name = "supporting_document_data")
+    private byte[] supportingDocumentData;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -99,6 +108,30 @@ public class Application {
 
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
+    }
+
+    public String getSupportingDocumentName() {
+        return supportingDocumentName;
+    }
+
+    public void setSupportingDocumentName(String supportingDocumentName) {
+        this.supportingDocumentName = supportingDocumentName;
+    }
+
+    public String getSupportingDocumentPath() {
+        return supportingDocumentPath;
+    }
+
+    public void setSupportingDocumentPath(String supportingDocumentPath) {
+        this.supportingDocumentPath = supportingDocumentPath;
+    }
+
+    public byte[] getSupportingDocumentData() {
+        return supportingDocumentData;
+    }
+
+    public void setSupportingDocumentData(byte[] supportingDocumentData) {
+        this.supportingDocumentData = supportingDocumentData;
     }
 
     public LocalDateTime getCreatedAt() {

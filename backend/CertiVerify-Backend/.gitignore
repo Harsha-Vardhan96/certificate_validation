@@ -31,6 +31,8 @@ spring-cloud-metadata.xml
 ### Other ###
 *.log
 *.tmp
+uploads/
+**/uploads/
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

@@ -48,6 +48,10 @@ yarn-error.log*
 pnpm-debug.log*
 *.tmp
 
+# --- Uploaded Documents & Runtime Media ---
+uploads/
+**/uploads/
+
 # --- IDEs & Editors ---
 .idea/
 *.iws

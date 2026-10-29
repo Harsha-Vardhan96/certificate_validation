@@ -14,6 +14,8 @@ public class ApplicationResponse {
     private String courseName;
     private ApplicationStatus status;
     private String rejectionReason;
+    private String supportingDocumentName;
+    private Boolean hasSupportingDocument;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -27,6 +29,10 @@ public class ApplicationResponse {
         this.courseName = application.getCourseName();
         this.status = application.getStatus();
         this.rejectionReason = application.getRejectionReason();
+        this.supportingDocumentName = application.getSupportingDocumentName();
+        this.hasSupportingDocument = (application.getSupportingDocumentName() != null
+                || application.getSupportingDocumentPath() != null
+                || application.getSupportingDocumentData() != null);
         this.createdAt = application.getCreatedAt();
         this.updatedAt = application.getUpdatedAt();
     }
@@ -85,6 +91,22 @@ public class ApplicationResponse {
 
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
+    }
+
+    public String getSupportingDocumentName() {
+        return supportingDocumentName;
+    }
+
+    public void setSupportingDocumentName(String supportingDocumentName) {
+        this.supportingDocumentName = supportingDocumentName;
+    }
+
+    public Boolean getHasSupportingDocument() {
+        return hasSupportingDocument;
+    }
+
+    public void setHasSupportingDocument(Boolean hasSupportingDocument) {
+        this.hasSupportingDocument = hasSupportingDocument;
     }
 
     public LocalDateTime getCreatedAt() {
